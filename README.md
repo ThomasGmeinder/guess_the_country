@@ -2,6 +2,10 @@
 
 A geography game: rotate and zoom a 3D globe, click a country (shown in different colors, no labels), then type its English name. Correct guesses earn points; less well-known countries are worth more.
 
+**Play online:** [https://thomasgmeinder.github.io/guess_the_country/](https://thomasgmeinder.github.io/guess_the_country/)
+
+![Screenshot of the game showing the 3D globe with countries in different colors](docs/screenshot.png)
+
 ## Run locally
 
 ```bash
@@ -28,3 +32,7 @@ Output is in `dist/`.
 ## Tech stack
 
 React 18, TypeScript, Vite, Three.js, three-globe, @turf/boolean-point-in-polygon.
+
+## GitHub Pages
+
+The app is deployed to GitHub Pages on every push to `main`. Enable it once in the repo **Settings → Pages**: set **Source** to **GitHub Actions**. The workflow (`.github/workflows/deploy.yml`) builds the app and deploys the `dist/` folder.
