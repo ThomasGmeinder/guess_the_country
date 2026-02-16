@@ -85,6 +85,7 @@ export default function App() {
         onSubmit={handleSubmitGuess}
         result={guessResult}
         pointsEarned={lastPoints}
+        selectedFeature={selectedFeature}
       />
     </>
   );

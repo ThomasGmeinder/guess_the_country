@@ -1,4 +1,6 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import { getHint } from '../data/hints';
+import type { GeoJSONFeature } from '../data/types';
 
 export interface GuessModalProps {
   isOpen: boolean;
@@ -6,15 +8,18 @@ export interface GuessModalProps {
   onSubmit: (guess: string) => void;
   result: 'pending' | 'correct' | 'wrong' | null;
   pointsEarned: number | null;
+  selectedFeature: GeoJSONFeature | null;
 }
 
-export default function GuessModal({ isOpen, onClose, onSubmit, result, pointsEarned }: GuessModalProps) {
+export default function GuessModal({ isOpen, onClose, onSubmit, result, pointsEarned, selectedFeature }: GuessModalProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [showHint, setShowHint] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       inputRef.current?.focus();
       inputRef.current?.select();
+      setShowHint(false);
     }
   }, [isOpen]);
 
@@ -25,6 +30,8 @@ export default function GuessModal({ isOpen, onClose, onSubmit, result, pointsEa
     const value = inputRef.current?.value?.trim() ?? '';
     if (value) onSubmit(value);
   };
+
+  const hint = selectedFeature ? getHint(selectedFeature.properties.ISO_A2) : null;
 
   return (
     <div
@@ -59,9 +66,34 @@ export default function GuessModal({ isOpen, onClose, onSubmit, result, pointsEa
           </p>
         )}
         {result === 'wrong' && (
-          <p style={{ margin: '0 0 0.5rem', color: '#fca5a5', fontWeight: 600 }}>
-            Wrong. Try another country.
-          </p>
+          <>
+            <p style={{ margin: '0 0 0.5rem', color: '#fca5a5', fontWeight: 600 }}>
+              Wrong. Try another country.
+            </p>
+            {!showHint ? (
+              <button
+                type="button"
+                onClick={() => setShowHint(true)}
+                style={{
+                  padding: '0.5rem 1rem',
+                  background: '#8b5cf6',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 8,
+                  cursor: 'pointer',
+                  marginBottom: '1rem',
+                  width: '100%',
+                  fontWeight: 500,
+                }}
+              >
+                Get a hint
+              </button>
+            ) : (
+              <p style={{ margin: '0 0 1rem', color: '#fbbf24', fontStyle: 'italic', padding: '0.75rem', background: 'rgba(251, 191, 36, 0.1)', borderRadius: 6 }}>
+                💡 {hint}
+              </p>
+            )}
+          </>
         )}
         <form onSubmit={handleSubmit}>
           <input
