@@ -66,7 +66,7 @@ export default function App() {
         console.log(`[APP] FR in fixed data: ${frFixed.length}, NO in fixed data: ${noFixed.length}`);
         
         const list = fixedFeatures.filter(
-          (f) => f.properties.ISO_A2 && f.properties.ISO_A2 !== 'AQ'
+          (f) => f.properties.ISO_A2
         );
         console.log(`[APP] After filter: ${list.length}`);
         const frCount = list.filter(f => f.properties.ISO_A2 === 'FR').length;

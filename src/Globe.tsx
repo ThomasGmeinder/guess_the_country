@@ -68,9 +68,12 @@ export default function Globe({ features, onCountryClick, selectedFeature }: Glo
     }
   }, [selectedFeature]);
   
-  // Filter out -99 (invalid/water polygons) to prevent them from being selected
-  const validFeatures = useMemo(() => features.filter(f => f.properties.ISO_A2 !== '-99'), [features]);
+  // Filter out -99 (invalid/water polygons) and AQ (Antarctica) to prevent them from being selected
+  const validFeatures = useMemo(() => features.filter(f => f.properties.ISO_A2 !== '-99' && f.properties.ISO_A2 !== 'AQ'), [features]);
   featuresRef.current = validFeatures;
+  
+  // All features including Antarctica for display
+  const displayFeatures = useMemo(() => features.filter(f => f.properties.ISO_A2 !== '-99'), [features]);
 
   const handleClick = useCallback(
     (raycaster: THREE.Raycaster, mouse: THREE.Vector2, globe: THREE.Group, pickSphere: THREE.Mesh) => {
@@ -151,17 +154,21 @@ export default function Globe({ features, onCountryClick, selectedFeature }: Glo
     const pickSphere = new THREE.Mesh(pickSphereGeom, pickSphereMat);
     globe.add(pickSphere);
 
-    console.log(`[GLOBE] validFeatures.length: ${validFeatures.length}`);
+    console.log(`[GLOBE] displayFeatures.length: ${displayFeatures.length}, validFeatures (clickable): ${validFeatures.length}`);
     console.log(`[GLOBE] Sample: FR=${validFeatures.find(f => f.properties.ISO_A2 === 'FR') ? 'found' : 'MISSING'}, NO=${validFeatures.find(f => f.properties.ISO_A2 === 'NO') ? 'found' : 'MISSING'}`);
     
     // Log first few countries to verify data
-    const firstFew = validFeatures.slice(0, 5).map(f => f.properties.ISO_A2).join(', ');
+    const firstFew = displayFeatures.slice(0, 5).map(f => f.properties.ISO_A2).join(', ');
     console.log(`[GLOBE] First few countries: ${firstFew}`);
     
     globe
-      .polygonsData(validFeatures)
+      .polygonsData(displayFeatures)
       .polygonCapColor(((d: GeoJSONFeature) => {
         const iso = d.properties.ISO_A2;
+        // Antarctica is white
+        if (iso === 'AQ') {
+          return '#ffffff';
+        }
         const color = isoToColor(iso);
         if (iso === 'FR' || iso === 'NO' || iso === 'US' || iso === 'CA') {
           console.log(`[COLOR] ${iso}: ${color}`);
@@ -223,7 +230,7 @@ export default function Globe({ features, onCountryClick, selectedFeature }: Glo
       renderer.dispose();
       container.removeChild(renderer.domElement);
     };
-  }, [handleClick, validFeatures]);
+  }, [handleClick, displayFeatures]);
 
   return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />;
 }
