@@ -5,14 +5,16 @@ import type { GeoJSONFeature } from '../data/types';
 export interface GuessModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (guess: string) => void;
+  onSubmit: (guess: string, hintUsed: boolean) => void;
   result: 'pending' | 'correct' | 'wrong' | null;
   pointsEarned: number | null;
   selectedFeature: GeoJSONFeature | null;
   correctSpelling: string | null;
+  usedHint: boolean;
+  hadSpellingMistake: boolean;
 }
 
-export default function GuessModal({ isOpen, onClose, onSubmit, result, pointsEarned, selectedFeature, correctSpelling }: GuessModalProps) {
+export default function GuessModal({ isOpen, onClose, onSubmit, result, pointsEarned, selectedFeature, correctSpelling, usedHint, hadSpellingMistake }: GuessModalProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [showHint, setShowHint] = useState(false);
 
@@ -29,7 +31,7 @@ export default function GuessModal({ isOpen, onClose, onSubmit, result, pointsEa
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const value = inputRef.current?.value?.trim() ?? '';
-    if (value) onSubmit(value);
+    if (value) onSubmit(value, showHint);
   };
 
   const hint = selectedFeature ? getHint(selectedFeature.properties.ISO_A2) : null;
@@ -63,9 +65,22 @@ export default function GuessModal({ isOpen, onClose, onSubmit, result, pointsEa
         </p>
         {result === 'correct' && pointsEarned != null && (
           <>
-            <p style={{ margin: '0 0 0.5rem', color: '#6ee7b7', fontWeight: 600 }}>
+            <p style={{ 
+              margin: '0 0 0.5rem', 
+              color: (usedHint || hadSpellingMistake) ? '#f97316' : '#6ee7b7',
+              fontWeight: 600 
+            }}>
               Correct! +{pointsEarned} points
             </p>
+            {(usedHint || hadSpellingMistake) && (
+              <p style={{ margin: '0 0 0.5rem', color: '#f97316', fontSize: 13 }}>
+                {hadSpellingMistake && usedHint 
+                  ? '(Half points: spelling mistake & hint used)' 
+                  : hadSpellingMistake 
+                  ? '(Half points: spelling mistake)' 
+                  : '(Half points: hint used)'}
+              </p>
+            )}
             {correctSpelling && (
               <p style={{ margin: '0 0 0.5rem', color: '#94a3b8', fontSize: 14 }}>
                 (The correct spelling is: <strong>{correctSpelling}</strong>)

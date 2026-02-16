@@ -17,6 +17,8 @@ export default function App() {
   const [guessResult, setGuessResult] = useState<'pending' | 'correct' | 'wrong' | null>(null);
   const [pointsMap, setPointsMap] = useState<Map<string, number>>(new Map());
   const [correctSpelling, setCorrectSpelling] = useState<string | null>(null);
+  const [usedHint, setUsedHint] = useState(false);
+  const [hadSpellingMistake, setHadSpellingMistake] = useState(false);
 
   useEffect(() => {
     fetch(GEOJSON_URL)
@@ -42,17 +44,27 @@ export default function App() {
     setGuessResult(null);
     setLastPoints(null);
     setCorrectSpelling(null);
+    setUsedHint(false);
+    setHadSpellingMistake(false);
   }, []);
 
   const handleSubmitGuess = useCallback(
-    (guess: string) => {
+    (guess: string, hintUsed: boolean) => {
       if (!selectedFeature) return;
       const result = checkGuess(guess, selectedFeature);
       if (result.correct) {
-        const pts = pointsMap.get(selectedFeature.properties.ISO_A2) ?? 25;
+        let pts = pointsMap.get(selectedFeature.properties.ISO_A2) ?? 25;
+        
+        // Half points if spelling mistake or hint was used
+        if (result.hadSpellingMistake || hintUsed) {
+          pts = Math.ceil(pts / 2);
+        }
+        
         setScore((s) => s + pts);
         setLastPoints(pts);
         setCorrectSpelling(result.correctSpelling ?? null);
+        setUsedHint(hintUsed);
+        setHadSpellingMistake(result.hadSpellingMistake);
         setGuessResult('correct');
       } else {
         setGuessResult('wrong');
@@ -90,6 +102,8 @@ export default function App() {
         pointsEarned={lastPoints}
         selectedFeature={selectedFeature}
         correctSpelling={correctSpelling}
+        usedHint={usedHint}
+        hadSpellingMistake={hadSpellingMistake}
       />
     </>
   );

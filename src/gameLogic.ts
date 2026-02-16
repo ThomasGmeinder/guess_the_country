@@ -99,6 +99,7 @@ function isSimilarEnough(a: string, b: string): boolean {
 export interface GuessResult {
   correct: boolean;
   correctSpelling?: string; // Only set if spelling was wrong but close
+  hadSpellingMistake: boolean; // True if user had spelling error
 }
 
 export function checkGuess(userInput: string, feature: GeoJSONFeature): GuessResult {
@@ -110,16 +111,16 @@ export function checkGuess(userInput: string, feature: GeoJSONFeature): GuessRes
   const normalizedResolved = normalizeCanonical(resolvedInput);
 
   // Exact matches (original logic)
-  if (normalizedResolved === normalizedCanonical) return { correct: true };
-  if (normalize(resolvedInput) === normalize(canonical)) return { correct: true };
+  if (normalizedResolved === normalizedCanonical) return { correct: true, hadSpellingMistake: false };
+  if (normalize(resolvedInput) === normalize(canonical)) return { correct: true, hadSpellingMistake: false };
   
   // Fuzzy matching for spelling mistakes
   if (isSimilarEnough(normalizedResolved, normalizedCanonical)) {
-    return { correct: true, correctSpelling: canonical };
+    return { correct: true, correctSpelling: canonical, hadSpellingMistake: true };
   }
   if (isSimilarEnough(normalize(resolvedInput), normalize(canonical))) {
-    return { correct: true, correctSpelling: canonical };
+    return { correct: true, correctSpelling: canonical, hadSpellingMistake: true };
   }
   
-  return { correct: false };
+  return { correct: false, hadSpellingMistake: false };
 }
