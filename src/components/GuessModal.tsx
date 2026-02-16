@@ -40,14 +40,11 @@ export default function GuessModal({ isOpen, onClose, onSubmit, result, pointsEa
     <div
       style={{
         position: 'fixed',
-        inset: 0,
-        background: 'rgba(0,0,0,0.6)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        bottom: '2rem',
+        right: '2rem',
         zIndex: 10,
       }}
-      onClick={onClose}
+      onClick={(e) => e.stopPropagation()}
     >
       <div
         style={{
@@ -56,9 +53,10 @@ export default function GuessModal({ isOpen, onClose, onSubmit, result, pointsEa
           padding: '1.5rem 2rem',
           borderRadius: 12,
           minWidth: 320,
-          boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+          maxWidth: 400,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
+          border: '1px solid rgba(255,255,255,0.1)',
         }}
-        onClick={(e) => e.stopPropagation()}
       >
         <p style={{ margin: '0 0 1rem', fontSize: 15 }}>
           Type the English name of the country you clicked.

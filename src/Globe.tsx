@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useMemo } from 'react';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import ThreeGlobe from 'three-globe';
@@ -9,11 +9,18 @@ import type { GeoJSONFeature } from './data/types';
 const GLOBE_RADIUS = 100;
 
 function isoToColor(iso: string): string {
-  let hash = 0;
-  for (let i = 0; i < iso.length; i++) hash = (hash << 5) - hash + iso.charCodeAt(i);
-  const h = Math.abs(hash % 360);
-  const s = 55 + (Math.abs(hash) % 25);
-  const l = 45 + (Math.abs(hash >> 8) % 15);
+  // FNV-1a hash algorithm for better distribution
+  let hash = 2166136261;
+  for (let i = 0; i < iso.length; i++) {
+    hash ^= iso.charCodeAt(i);
+    hash = (hash * 16777619) >>> 0; // Use unsigned 32-bit
+  }
+  
+  // Distribute hash bits across HSL components
+  const h = hash % 360;
+  const s = 40 + ((hash >> 8) % 50);
+  const l = 45 + ((hash >> 16) % 20);
+  
   return `hsl(${h}, ${s}%, ${l}%)`;
 }
 
@@ -33,12 +40,37 @@ function cartesianToLngLat(p: THREE.Vector3): [number, number] {
 export interface GlobeProps {
   features: GeoJSONFeature[];
   onCountryClick: (feature: GeoJSONFeature) => void;
+  selectedFeature?: GeoJSONFeature | null;
 }
 
-export default function Globe({ features, onCountryClick }: GlobeProps) {
+export default function Globe({ features, onCountryClick, selectedFeature }: GlobeProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const featuresRef = useRef<GeoJSONFeature[]>([]);
-  featuresRef.current = features;
+  const globeRef = useRef<ThreeGlobe | null>(null);
+  const selectedIsoRef = useRef<string | null>(null);
+  
+  // Keep selected ISO in a ref for access in callbacks
+  useEffect(() => {
+    selectedIsoRef.current = selectedFeature ? selectedFeature.properties.ISO_A2 : null;
+    // Update highlight/elevation if globe is already created
+    if (globeRef.current) {
+      globeRef.current
+        .polygonStrokeColor((d: any) => {
+          const featureIso = d.properties?.ISO_A2;
+          const selectedIso = selectedIsoRef.current;
+          return selectedIso && featureIso === selectedIso ? '#ff0000' : '#333';
+        })
+        .polygonAltitude((d: any) => {
+          const featureIso = d.properties?.ISO_A2;
+          const selectedIso = selectedIsoRef.current;
+          return selectedIso && featureIso === selectedIso ? 0.05 : 0.01;
+        });
+    }
+  }, [selectedFeature]);
+  
+  // Filter out -99 (invalid/water polygons) to prevent them from being selected
+  const validFeatures = useMemo(() => features.filter(f => f.properties.ISO_A2 !== '-99'), [features]);
+  featuresRef.current = validFeatures;
 
   const handleClick = useCallback(
     (raycaster: THREE.Raycaster, mouse: THREE.Vector2, globe: THREE.Group, pickSphere: THREE.Mesh) => {
@@ -52,28 +84,38 @@ export default function Globe({ features, onCountryClick }: GlobeProps) {
       const containing: GeoJSONFeature[] = [];
       for (const feature of featuresRef.current) {
         const geom = feature.geometry;
+        let isContained = false;
+        
         if (geom.type === 'Polygon') {
           const poly = { type: 'Feature' as const, properties: {}, geometry: { type: 'Polygon' as const, coordinates: geom.coordinates as unknown as GeoJSON.Position[][] } };
-          if (booleanPointInPolygon(pt, poly)) containing.push(feature);
+          isContained = booleanPointInPolygon(pt, poly);
         } else if (geom.type === 'MultiPolygon') {
           for (const ring of geom.coordinates) {
             const poly = { type: 'Feature' as const, properties: {}, geometry: { type: 'Polygon' as const, coordinates: ring as unknown as GeoJSON.Position[][] } };
             if (booleanPointInPolygon(pt, poly)) {
-              containing.push(feature);
+              isContained = true;
               break;
             }
           }
         }
+        
+        if (isContained) {
+          containing.push(feature);
+        }
       }
+      
       if (containing.length === 0) return;
+      
       if (containing.length === 1) {
         onCountryClick(containing[0]);
         return;
       }
+      
       const featureCollection = { type: 'FeatureCollection' as const, features: containing.map((f) => ({ type: 'Feature' as const, properties: {}, geometry: f.geometry })) };
       const areas = containing.map((_, i) => area(featureCollection.features[i]));
       let minIdx = 0;
       for (let i = 1; i < areas.length; i++) if (areas[i] < areas[minIdx]) minIdx = i;
+      
       onCountryClick(containing[minIdx]);
     },
     [onCountryClick]
@@ -109,12 +151,36 @@ export default function Globe({ features, onCountryClick }: GlobeProps) {
     const pickSphere = new THREE.Mesh(pickSphereGeom, pickSphereMat);
     globe.add(pickSphere);
 
+    console.log(`[GLOBE] validFeatures.length: ${validFeatures.length}`);
+    console.log(`[GLOBE] Sample: FR=${validFeatures.find(f => f.properties.ISO_A2 === 'FR') ? 'found' : 'MISSING'}, NO=${validFeatures.find(f => f.properties.ISO_A2 === 'NO') ? 'found' : 'MISSING'}`);
+    
+    // Log first few countries to verify data
+    const firstFew = validFeatures.slice(0, 5).map(f => f.properties.ISO_A2).join(', ');
+    console.log(`[GLOBE] First few countries: ${firstFew}`);
+    
     globe
-      .polygonsData(features)
-      .polygonCapColor(((d: GeoJSONFeature) => isoToColor(d.properties.ISO_A2)) as (obj: object) => string)
+      .polygonsData(validFeatures)
+      .polygonCapColor(((d: GeoJSONFeature) => {
+        const iso = d.properties.ISO_A2;
+        const color = isoToColor(iso);
+        if (iso === 'FR' || iso === 'NO' || iso === 'US' || iso === 'CA') {
+          console.log(`[COLOR] ${iso}: ${color}`);
+        }
+        return color;
+      }) as (obj: object) => string)
       .polygonSideColor(() => 'rgba(0,0,0,0.1)')
-      .polygonStrokeColor(() => '#333')
-      .polygonAltitude(0.01);
+      .polygonStrokeColor((d: any) => {
+        const featureIso = d.properties?.ISO_A2;
+        const selectedIso = selectedIsoRef.current;
+        return selectedIso && featureIso === selectedIso ? '#ff0000' : '#333';
+      })
+      .polygonAltitude((d: any) => {
+        const featureIso = d.properties?.ISO_A2;
+        const selectedIso = selectedIsoRef.current;
+        return selectedIso && featureIso === selectedIso ? 0.05 : 0.01;
+      });
+
+    globeRef.current = globe;
 
     scene.add(globe);
     scene.add(new THREE.AmbientLight(0xffffff, 0.7));
@@ -157,7 +223,7 @@ export default function Globe({ features, onCountryClick }: GlobeProps) {
       renderer.dispose();
       container.removeChild(renderer.domElement);
     };
-  }, [handleClick, features]);
+  }, [handleClick, validFeatures]);
 
   return <div ref={containerRef} style={{ width: '100%', height: '100%' }} />;
 }
