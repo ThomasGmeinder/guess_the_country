@@ -14,6 +14,7 @@ const NAME_ALIASES: Record<string, string> = {
   'ivory coast': "Côte d'Ivoire",
   "côte d'ivoire": "Côte d'Ivoire",
   "cote d'ivoire": "Côte d'Ivoire",
+  'china': "People's Republic of China",
   'taiwan': 'Taiwan',
   'vatican': 'Vatican City',
   'vatican city': 'Vatican City',
