@@ -16,6 +16,7 @@ export default function App() {
   const [selectedFeature, setSelectedFeature] = useState<GeoJSONFeature | null>(null);
   const [guessResult, setGuessResult] = useState<'pending' | 'correct' | 'wrong' | null>(null);
   const [pointsMap, setPointsMap] = useState<Map<string, number>>(new Map());
+  const [correctSpelling, setCorrectSpelling] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(GEOJSON_URL)
@@ -40,16 +41,18 @@ export default function App() {
     setSelectedFeature(null);
     setGuessResult(null);
     setLastPoints(null);
+    setCorrectSpelling(null);
   }, []);
 
   const handleSubmitGuess = useCallback(
     (guess: string) => {
       if (!selectedFeature) return;
-      const correct = checkGuess(guess, selectedFeature);
-      if (correct) {
+      const result = checkGuess(guess, selectedFeature);
+      if (result.correct) {
         const pts = pointsMap.get(selectedFeature.properties.ISO_A2) ?? 25;
         setScore((s) => s + pts);
         setLastPoints(pts);
+        setCorrectSpelling(result.correctSpelling ?? null);
         setGuessResult('correct');
       } else {
         setGuessResult('wrong');
@@ -86,6 +89,7 @@ export default function App() {
         result={guessResult}
         pointsEarned={lastPoints}
         selectedFeature={selectedFeature}
+        correctSpelling={correctSpelling}
       />
     </>
   );

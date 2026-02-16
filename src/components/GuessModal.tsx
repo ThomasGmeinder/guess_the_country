@@ -9,9 +9,10 @@ export interface GuessModalProps {
   result: 'pending' | 'correct' | 'wrong' | null;
   pointsEarned: number | null;
   selectedFeature: GeoJSONFeature | null;
+  correctSpelling: string | null;
 }
 
-export default function GuessModal({ isOpen, onClose, onSubmit, result, pointsEarned, selectedFeature }: GuessModalProps) {
+export default function GuessModal({ isOpen, onClose, onSubmit, result, pointsEarned, selectedFeature, correctSpelling }: GuessModalProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [showHint, setShowHint] = useState(false);
 
@@ -61,9 +62,16 @@ export default function GuessModal({ isOpen, onClose, onSubmit, result, pointsEa
           Type the English name of the country you clicked.
         </p>
         {result === 'correct' && pointsEarned != null && (
-          <p style={{ margin: '0 0 0.5rem', color: '#6ee7b7', fontWeight: 600 }}>
-            Correct! +{pointsEarned} points
-          </p>
+          <>
+            <p style={{ margin: '0 0 0.5rem', color: '#6ee7b7', fontWeight: 600 }}>
+              Correct! +{pointsEarned} points
+            </p>
+            {correctSpelling && (
+              <p style={{ margin: '0 0 0.5rem', color: '#94a3b8', fontSize: 14 }}>
+                (The correct spelling is: <strong>{correctSpelling}</strong>)
+              </p>
+            )}
+          </>
         )}
         {result === 'wrong' && (
           <>
