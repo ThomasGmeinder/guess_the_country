@@ -17,14 +17,23 @@ export interface GuessModalProps {
 export default function GuessModal({ isOpen, onClose, onSubmit, result, pointsEarned, selectedFeature, correctSpelling, usedHint, hadSpellingMistake }: GuessModalProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [showHint, setShowHint] = useState(false);
+  const prevISORef = useRef<string | undefined>(undefined);
+  const selectedISO = selectedFeature?.properties.ISO_A2;
 
   useEffect(() => {
     if (isOpen) {
       inputRef.current?.focus();
       inputRef.current?.select();
-      setShowHint(false);
     }
   }, [isOpen]);
+
+  // Reset hint when country changes
+  useEffect(() => {
+    if (selectedISO !== prevISORef.current) {
+      setShowHint(false);
+      prevISORef.current = selectedISO;
+    }
+  }, [selectedISO]);
 
   if (!isOpen) return null;
 
