@@ -20,8 +20,6 @@ const NAME_ALIASES: Record<string, string> = {
   'vatican city': 'Vatican City',
   'south korea': 'South Korea',
   'north korea': 'North Korea',
-  'russia': 'Russian Federation',
-  'russian federation': 'Russian Federation',
   'iran': 'Iran',
   'syria': 'Syria',
   'laos': 'Lao PDR',
