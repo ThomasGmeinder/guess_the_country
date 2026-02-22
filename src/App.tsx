@@ -134,6 +134,19 @@ export default function App() {
           pointerEvents: 'none',
         }}
       >
+        <span
+          style={{
+            position: 'absolute',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            fontWeight: 900,
+            fontSize: 'clamp(20px, 4vw, 28px)',
+            letterSpacing: 0.5,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Worldle
+        </span>
         <span style={{ fontWeight: 700, fontSize: 18 }}>Score: {score}</span>
         <span style={{ marginLeft: 16, opacity: 0.9 }}>Click a country to guess.</span>
       </div>

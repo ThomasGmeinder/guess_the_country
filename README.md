@@ -1,4 +1,4 @@
-# Guess the Country
+# Worldle
 
 A geography game: rotate and zoom a 3D globe, click a country (shown in different colors, no labels), then type its English name. Correct guesses earn points; less well-known countries are worth more.
 
