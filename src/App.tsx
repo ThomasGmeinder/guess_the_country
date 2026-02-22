@@ -5,6 +5,7 @@ import type { GeoJSONFeature } from './data/types';
 import type { GeoJSONFeatureCollection } from './data/types';
 import { buildPointsMap } from './data/scoring';
 import { checkGuess } from './gameLogic';
+import welcomeImage from './assets/worldle.jpg';
 
 const GEOJSON_URL =
   'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_countries.geojson';
@@ -22,6 +23,7 @@ const ISO_CODE_MAP: { [key: string]: string } = {
 
 export default function App() {
   const [features, setFeatures] = useState<GeoJSONFeature[]>([]);
+  const [hasStarted, setHasStarted] = useState(false);
   const [score, setScore] = useState(0);
   const [lastPoints, setLastPoints] = useState<number | null>(null);
   const [selectedFeature, setSelectedFeature] = useState<GeoJSONFeature | null>(null);
@@ -121,49 +123,113 @@ export default function App() {
 
   return (
     <>
-      <div
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          padding: '12px 20px',
-          background: 'linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)',
-          color: '#fff',
-          zIndex: 5,
-          pointerEvents: 'none',
-        }}
-      >
-        <span
+      {!hasStarted && (
+        <div
+          onClick={() => setHasStarted(true)}
           style={{
-            position: 'absolute',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            fontWeight: 900,
-            fontSize: 'clamp(20px, 4vw, 28px)',
-            letterSpacing: 0.5,
-            whiteSpace: 'nowrap',
+            position: 'fixed',
+            inset: 0,
+            zIndex: 10,
+            cursor: 'pointer',
+            backgroundImage: `url(${welcomeImage})`,
+            backgroundSize: 'contain',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            backgroundColor: '#000',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'flex-start',
+            alignItems: 'center',
+            padding: '28px 20px',
+            color: '#fff',
+            textAlign: 'center',
           }}
         >
-          Worldle
-        </span>
-        <span style={{ fontWeight: 700, fontSize: 18 }}>Score: {score}</span>
-        <span style={{ marginLeft: 16, opacity: 0.9 }}>Click a country to guess.</span>
-      </div>
+          <span style={{ fontSize: 'clamp(28px, 6vw, 48px)', fontWeight: 800 }}>Welcome to</span>
+          <div
+            style={{
+              position: 'absolute',
+              left: '50%',
+              bottom: '22%',
+              transform: 'translateX(-50%)',
+              width: 'min(92%, 980px)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+            <span style={{ fontSize: 'clamp(16px, 2.5vw, 24px)', fontWeight: 600, maxWidth: 920 }}>
+              Click anywere to start the game and collect points
+              <br />
+              by naming countries on the 3D World Map
+            </span>
+          </div>
+          <span
+            style={{
+              position: 'absolute',
+              right: '12%',
+              bottom: '7%',
+              fontSize: 'clamp(12px, 1.6vw, 16px)',
+              color: '#1f5a2d',
+              fontWeight: 700,
+              backgroundColor: '#fff',
+              padding: '4px 10px',
+              borderRadius: 6,
+            }}
+          >
+            Artwork by Marnie Jones
+          </span>
+        </div>
+      )}
 
       <Globe features={features} onCountryClick={handleCountryClick} selectedFeature={selectedFeature} />
 
-      <GuessModal
-        isOpen={selectedFeature !== null}
-        onClose={handleCloseModal}
-        onSubmit={handleSubmitGuess}
-        result={guessResult}
-        pointsEarned={lastPoints}
-        selectedFeature={selectedFeature}
-        correctSpelling={correctSpelling}
-        usedHint={usedHint}
-        hadSpellingMistake={hadSpellingMistake}
-      />
+      {hasStarted && (
+        <>
+          <div
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              padding: '12px 20px',
+              background: 'linear-gradient(to bottom, rgba(0,0,0,0.6), transparent)',
+              color: '#fff',
+              zIndex: 5,
+              pointerEvents: 'none',
+            }}
+          >
+            <span
+              style={{
+                position: 'absolute',
+                left: '50%',
+                transform: 'translateX(-50%)',
+                fontWeight: 900,
+                fontSize: 'clamp(20px, 4vw, 28px)',
+                letterSpacing: 0.5,
+                whiteSpace: 'nowrap',
+                color: '#1f5a2d',
+              }}
+            >
+              Worldle
+            </span>
+            <span style={{ fontWeight: 700, fontSize: 18 }}>Score: {score}</span>
+            <span style={{ marginLeft: 16, opacity: 0.9 }}>Click a country to guess.</span>
+          </div>
+
+          <GuessModal
+            isOpen={selectedFeature !== null}
+            onClose={handleCloseModal}
+            onSubmit={handleSubmitGuess}
+            result={guessResult}
+            pointsEarned={lastPoints}
+            selectedFeature={selectedFeature}
+            correctSpelling={correctSpelling}
+            usedHint={usedHint}
+            hadSpellingMistake={hadSpellingMistake}
+          />
+        </>
+      )}
     </>
   );
 }
