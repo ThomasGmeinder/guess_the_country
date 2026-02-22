@@ -159,9 +159,9 @@ export default function App() {
             }}
           >
             <span style={{ fontSize: 'clamp(16px, 2.5vw, 24px)', fontWeight: 600, maxWidth: 920 }}>
-              Click anywere to start the game and collect points
+              Click anywhere to start the game and collect points
               <br />
-              by naming countries on the 3D World Map
+              by naming countries on the 3D world map.
             </span>
           </div>
           <span
